@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 from datetime import datetime
+import os
 
 # -------------------------------
 # REDCap API Config
@@ -88,4 +89,5 @@ if "heal_qx_complete" in df.columns:
 # -------------------------------
 # Last updated time
 # -------------------------------
+
 st.caption(f"Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
