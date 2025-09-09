@@ -28,6 +28,11 @@ def fetch_redcap_data():
 
 df = fetch_redcap_data()
 
+st.image(
+    "https://raw.githubusercontent.com/debbie-addey/HealDashboard/main/images/Atlantic%20PATH%20LOGO%20MASTER1.jpg",
+    use_column_width=True
+)
+
 # -------------------------------
 # KPIs
 # -------------------------------
@@ -91,3 +96,4 @@ if "heal_qx_complete" in df.columns:
 # -------------------------------
 
 st.caption(f"Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
