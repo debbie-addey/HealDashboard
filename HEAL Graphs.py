@@ -92,11 +92,28 @@ if "heal_qx_complete" in df.columns:
     st.plotly_chart(fig2)
 
 
+
+
 # ASA24 Completion Status
 # -------------------------------
 
+if "asa_qx_date" in df.columns:
+    df["asa_status"] = df["asa_qx_date"].apply(
+        lambda x: "Complete" if pd.notnull(x) and str(x).strip() != "" else "Not Complete"
+    )
+    asa_counts = df["asa_status"].value_counts().reset_index()
+    asa_counts.columns = ["Status", "Count"]
+    
+    fig_asa = px.bar(
+        asa_counts,
+        x="Status",
+        y="Count",
+        title="ASA24 Completion Status",
+        text="Count",
+        color="Status"
+    )
+    st.plotly_chart(fig_asa)
 
-# -------------------------------
 # ACT Completion Status
 # -------------------------------
 if "act_qx_date" in df.columns:
@@ -117,11 +134,13 @@ if "act_qx_date" in df.columns:
     st.plotly_chart(fig_act)
 
 
+
 # -------------------------------
 # Last updated time
 # -------------------------------
 
 st.caption(f"Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
 
 
 
