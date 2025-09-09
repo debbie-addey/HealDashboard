@@ -91,29 +91,7 @@ if "heal_qx_complete" in df.columns:
     )
     st.plotly_chart(fig2)
 
-# -------------------------------
-# ASA & ACT Completion Breakdown
-# -------------------------------
-if "asa_qx_date" in df.columns and "act_qx_date" in df.columns:
-    # Count non-null entries
-    asa_completed = df["asa_qx_date"].notnull().sum()
-    act_completed = df["act_qx_date"].notnull().sum()
-    
-    survey_counts = pd.DataFrame({
-        "Survey": ["ASA24", "ACT"],
-        "Completed": [asa_completed, act_completed]
-    })
-    
-    fig3 = px.bar(
-        survey_counts,
-        x="Survey",
-        y="Completed",
-        title="ASA & ACT Survey Completions",
-        text="Completed",
-        color="Survey"
-    )
-    
-    st.plotly_chart(fig3)# -------------------------------
+
 # ASA24 Completion Status
 # -------------------------------
 if "asa_qx_date" in df.columns:
@@ -155,6 +133,7 @@ if "act_qx_date" in df.columns:
 # -------------------------------
 
 st.caption(f"Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
 
 
 
