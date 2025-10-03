@@ -42,13 +42,13 @@ consented_count = (df["consent_complete"] == "2").sum()
 recall1_invited = (df["heal_qx_complete"] == "2").sum() if "heal_qx_complete" in df.columns else 0
 
 # Recall 2 invited = enrolment arm flag
-recall2_invited = (df["enrolment_arm_1___asa_act_complete"] == "1").sum() if "enrolment_arm_1___asa_act_complete" in df.columns else 0
+recall2_invited = ((df["redcap_event_name"] == "enrolment_arm_1") & (df["asa_act_complete"] == "1")).sum()
 
 # Recall 3 invited = followup arm flag
-recall3_invited = (df["followup_arm_1___asa_act_complete"] == "1").sum() if "followup_arm_1___asa_act_complete" in df.columns else 0
+recall3_invited = ((df["redcap_event_name"] == "followup_arm_1") & (df["asa_act_complete"] == "1")).sum()
 
 # Recall 4 invited = followup2 arm flag
-recall4_invited = (df["followup2_arm_1___asa_act_complete"] == "1").sum() if "followup2_arm_1___asa_act_complete" in df.columns else 0
+recall4_invited = ((df["redcap_event_name"] == "followup2_arm_1") & (df["asa_act_complete"] == "1")).sum()
 
 # Total invited across all recalls
 total_invited = recall1_invited + recall2_invited + recall3_invited + recall4_invited
@@ -187,6 +187,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
