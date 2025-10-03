@@ -36,24 +36,32 @@ st.image(
 # -------------------------------
 # KPIs
 # -------------------------------
-invited_count_admin = (df["administrative_complete"] == "2").sum()
 consented_count = (df["consent_complete"] == "2").sum()
 
 # Recall 1 invited = HEAL completed
 recall1_invited = (df["heal_qx_complete"] == "2").sum() if "heal_qx_complete" in df.columns else 0
 
-# Recall 2+ invited = event invitation flags
+# Recall 2 invited = enrolment arm flag
 recall2_invited = (df["enrolment_arm_1___asa_act_complete"] == "1").sum() if "enrolment_arm_1___asa_act_complete" in df.columns else 0
+
+# Recall 3 invited = followup arm flag
 recall3_invited = (df["followup_arm_1___asa_act_complete"] == "1").sum() if "followup_arm_1___asa_act_complete" in df.columns else 0
+
+# Recall 4 invited = followup2 arm flag
 recall4_invited = (df["followup2_arm_1___asa_act_complete"] == "1").sum() if "followup2_arm_1___asa_act_complete" in df.columns else 0
 
-# Layout: 5 KPIs in one row
-col5, col1, col2, col3, col4  = st.columns(5)
-col1.metric("Recall 1 Invited", recall1_invited)
-col2.metric("Recall 2 Invited", recall2_invited)
-col3.metric("Recall 3 Invited", recall3_invited)
-col4.metric("Recall 4 Invited", recall4_invited)
-col5.metric("Completed Consents", consented_count)
+# Total invited across all recalls
+total_invited = recall1_invited + recall2_invited + recall3_invited + recall4_invited
+
+# Layout: 6 KPIs in one row
+col1, col6, col3, col4, col5, col1 = st.columns(6)
+col1.metric("Total Invited", total_invited)
+col2.metric("Recall 1 Invited", recall1_invited)
+col3.metric("Recall 2 Invited", recall2_invited)
+col4.metric("Recall 3 Invited", recall3_invited)
+col5.metric("Recall 4 Invited", recall4_invited)
+col6.metric("Completed Consents", consented_count)
+
 
 
 
@@ -179,6 +187,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
