@@ -72,56 +72,96 @@ if "heal_qx_complete" in df.columns:
     st.plotly_chart(fig2)
 
 # -------------------------------
-# ASA24 Completion Status by Event
+# Define Event Name Mapping and Order
+# -------------------------------
+event_map = {
+    "enrolment_arm_1": "Recall 1",
+    "followup_arm_1": "Recall 2",
+    "followup2_arm_1": "Recall 3",
+    "followup3_arm_1": "Recall 4"
+}
+event_order = ["Recall 1", "Recall 2", "Recall 3", "Recall 4"]
+
+# -------------------------------
+# ASA24 Completion Status by Event + Invited
 # -------------------------------
 if "asa_qx_date" in df.columns and "redcap_event_name" in df.columns:
     df["asa_status"] = df["asa_qx_date"].apply(
         lambda x: "Complete" if pd.notnull(x) and str(x).strip() != "" else "Not Complete"
     )
+    df["asa_event_label"] = df["redcap_event_name"].map(event_map).fillna(df["redcap_event_name"])
 
+    # Count completions
     asa_counts = (
-        df.groupby(["redcap_event_name", "asa_status"])
+        df.groupby(["asa_event_label", "asa_status"])
         .size()
         .reset_index(name="Count")
     )
 
+    # Add invited counts for recalls 2+
+    invited_rows = []
+    for ev in event_map.keys():
+        label = event_map[ev]
+        if label != "Recall 1":
+            invited_var = f"{ev}___asa_act_complete"
+            if invited_var in df.columns:
+                invited_count = (df[invited_var] == "1").sum()
+                invited_rows.append({"asa_event_label": label, "asa_status": "Invited", "Count": invited_count})
+
+    asa_counts = pd.concat([asa_counts, pd.DataFrame(invited_rows)], ignore_index=True)
+
+    # Plot
     fig_asa = px.bar(
         asa_counts,
-        x="redcap_event_name",
+        x="asa_event_label",
         y="Count",
         color="asa_status",
+        category_orders={"asa_event_label": event_order},
         barmode="group",
-        title="ASA24 Completion Status by Event",
+        title="ASA24 Participation by Recall",
         text="Count"
     )
+    fig_asa.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_asa)
 
 # -------------------------------
-# ACT Completion Status by Event
+# ACT Completion Status by Event + Invited
 # -------------------------------
 if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     df["act_status"] = df["act_qx_date"].apply(
         lambda x: "Complete" if pd.notnull(x) and str(x).strip() != "" else "Not Complete"
     )
+    df["act_event_label"] = df["redcap_event_name"].map(event_map).fillna(df["redcap_event_name"])
 
+    # Count completions
     act_counts = (
-        df.groupby(["redcap_event_name", "act_status"])
+        df.groupby(["act_event_label", "act_status"])
         .size()
         .reset_index(name="Count")
     )
 
+    # Add invited counts for recalls 2+
+    invited_rows = []
+    for ev in event_map.keys():
+        label = event_map[ev]
+        if label != "Recall 1":
+            invited_var = f"{ev}___asa_act_complete"
+            if invited_var in df.columns:
+                invited_count = (df[invited_var] == "1").sum()
+                invited_rows.append({"act_event_label": label, "act_status": "Invited", "Count": invited_count})
+
+    act_counts = pd.concat([act_counts, pd.DataFrame(invited_rows)], ignore_index=True)
+
+    # Plot
     fig_act = px.bar(
         act_counts,
-        x="redcap_event_name",
+        x="act_event_label",
         y="Count",
         color="act_status",
+        category_orders={"act_event_label": event_order},
         barmode="group",
-        title="ACT Completion Status by Event",
+        title="ACT Participation by Recall",
         text="Count"
     )
+    fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
-
-# -------------------------------
-# Last updated time
-# -------------------------------
-st.caption(f"Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
