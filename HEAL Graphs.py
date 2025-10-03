@@ -48,12 +48,13 @@ recall3_invited = (df["followup2_arm_1___asa_act_complete"] == "1").sum() if "fo
 recall4_invited = (df["followup3_arm_1___asa_act_complete"] == "1").sum() if "followup3_arm_1___asa_act_complete" in df.columns else 0
 
 # Layout: 5 KPIs in one row
-col1, col2, col3, col4, col5 = st.columns(5)
+col5, col6,col1, col2, col3, col4  = st.columns(5)
 col1.metric("Recall 1 Invited", recall1_invited)
 col2.metric("Recall 2 Invited", recall2_invited)
 col3.metric("Recall 3 Invited", recall3_invited)
 col4.metric("Recall 4 Invited", recall4_invited)
 col5.metric("Completed Consents", consented_count)
+col6.metric("Total Invited", invited_count_admin)
 
 
 # -------------------------------
@@ -178,6 +179,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
