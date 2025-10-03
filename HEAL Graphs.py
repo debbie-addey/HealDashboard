@@ -39,9 +39,18 @@ st.image(
 invited_count = (df["administrative_complete"] == "2").sum()
 consented_count = (df["consent_complete"] == "2").sum()
 
-col1, col2 = st.columns(2)
-col1.metric("Total Invited", invited_count)
+# Count recall invitations (ASA/ACT) for recalls 2+
+recall_invited_total = 0
+for ev in ["followup_arm_1", "followup2_arm_1", "followup3_arm_1"]:
+    invited_var = f"{ev}___asa_act_complete"
+    if invited_var in df.columns:
+        recall_invited_total += (df[invited_var] == "1").sum()
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Total Invited (Admin)", invited_count)
 col2.metric("Total Completed Consent", consented_count)
+col3.metric("Total Recall Invited (Rounds 2+)", recall_invited_total)
+
 
 # -------------------------------
 # Participation Status Breakdown
@@ -165,3 +174,4 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
