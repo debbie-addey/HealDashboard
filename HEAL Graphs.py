@@ -47,103 +47,81 @@ col2.metric("Total Completed Consent", consented_count)
 # Participation Status Breakdown
 # -------------------------------
 if "participation_status" in df.columns:
-    # Map values to labels
-    participation_map = {
-        "0": "Declined to Participate",
-        "1": "Agreed to Participate"
-    }
+    participation_map = {"0": "Declined to Participate", "1": "Agreed to Participate"}
     df["participation_status_label"] = df["participation_status"].map(participation_map)
 
     participation_counts = df["participation_status_label"].value_counts().reset_index()
     participation_counts.columns = ["Status", "Count"]
 
-    fig1 = px.bar(
-        participation_counts,
-        x="Status",
-        y="Count",
-        title="Participation Status Breakdown",
-        text="Count",
-        color="Status"  # legend
-    )
+    fig1 = px.bar(participation_counts, x="Status", y="Count",
+                  title="Participation Status Breakdown", text="Count", color="Status")
     st.plotly_chart(fig1)
 
 # -------------------------------
 # HEAL Completion Status Breakdown
 # -------------------------------
 if "heal_qx_complete" in df.columns:
-    # Map values to labels
-    heal_map = {
-        "0": "Incomplete / Not Started",
-        "2": "Complete"
-    }
+    heal_map = {"0": "Incomplete / Not Started", "2": "Complete"}
     df["heal_qx_complete_label"] = df["heal_qx_complete"].map(heal_map)
 
     heal_counts = df["heal_qx_complete_label"].value_counts().reset_index()
     heal_counts.columns = ["Status", "Count"]
 
-    fig2 = px.bar(
-        heal_counts,
-        x="Status",
-        y="Count",
-        title="HEAL Questionnaire Completion",
-        text="Count",
-        color="Status"  # legend
-    )
+    fig2 = px.bar(heal_counts, x="Status", y="Count",
+                  title="HEAL Questionnaire Completion", text="Count", color="Status")
     st.plotly_chart(fig2)
 
-
-
-
-# ASA24 Completion Status
 # -------------------------------
-
-if "asa_qx_date" in df.columns:
+# ASA24 Completion Status by Event
+# -------------------------------
+if "asa_qx_date" in df.columns and "redcap_event_name" in df.columns:
     df["asa_status"] = df["asa_qx_date"].apply(
         lambda x: "Complete" if pd.notnull(x) and str(x).strip() != "" else "Not Complete"
     )
-    asa_counts = df["asa_status"].value_counts().reset_index()
-    asa_counts.columns = ["Status", "Count"]
-    
+
+    asa_counts = (
+        df.groupby(["redcap_event_name", "asa_status"])
+        .size()
+        .reset_index(name="Count")
+    )
+
     fig_asa = px.bar(
         asa_counts,
-        x="Status",
+        x="redcap_event_name",
         y="Count",
-        title="ASA24 Completion Status",
-        text="Count",
-        color="Status"
+        color="asa_status",
+        barmode="group",
+        title="ASA24 Completion Status by Event",
+        text="Count"
     )
     st.plotly_chart(fig_asa)
 
-# ACT Completion Status
 # -------------------------------
-if "act_qx_date" in df.columns:
+# ACT Completion Status by Event
+# -------------------------------
+if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     df["act_status"] = df["act_qx_date"].apply(
         lambda x: "Complete" if pd.notnull(x) and str(x).strip() != "" else "Not Complete"
     )
-    act_counts = df["act_status"].value_counts().reset_index()
-    act_counts.columns = ["Status", "Count"]
-    
+
+    act_counts = (
+        df.groupby(["redcap_event_name", "act_status"])
+        .size()
+        .reset_index(name="Count")
+    )
+
     fig_act = px.bar(
         act_counts,
-        x="Status",
+        x="redcap_event_name",
         y="Count",
-        title="ACT Completion Status",
-        text="Count",
-        color="Status"
+        color="act_status",
+        barmode="group",
+        title="ACT Completion Status by Event",
+        text="Count"
     )
     st.plotly_chart(fig_act)
-
-
 
 # -------------------------------
 # Last updated time
 # -------------------------------
-
 st.caption(f"Last refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-
-
-
-
-
-
-
