@@ -37,6 +37,7 @@ st.image(
 # KPIs
 # -------------------------------
 consented_count = (df["consent_complete"] == "2").sum()
+invited_count = (df["invite_date"]<>" ").count()
 
 # Recall 1 invited = HEAL completed
 recall1_invited = (df["heal_qx_complete"] == "2").sum() if "heal_qx_complete" in df.columns else 0
@@ -51,7 +52,7 @@ recall3_invited = ((df["redcap_event_name"] == "followup_arm_1") & (df["asa_act_
 recall4_invited = ((df["redcap_event_name"] == "followup2_arm_1") & (df["asa_act_complete"] == "1")).sum()
 
 # Total invited across all recalls
-total_invited = (df["invite_date"]<>"")
+total_invited = invited_count
 
 # Layout: 6 KPIs in one row
 col1, col6, col2, col3, col4, col5 = st.columns(6)
@@ -185,6 +186,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
