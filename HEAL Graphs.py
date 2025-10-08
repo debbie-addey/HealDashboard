@@ -85,7 +85,7 @@ if "participation_status" in df.columns:
     participation_counts.columns = ["Status", "Count"]
 
     fig1 = px.bar(participation_counts, x="Status", y="Count",
-                  title="Participation Status Breakdown", text="Count", color="Status")
+                  title="Consent Status", text="Count", color="Status")
     st.plotly_chart(fig1)
 
 # -------------------------------
@@ -99,7 +99,7 @@ if "heal_qx_complete" in df.columns:
     heal_counts.columns = ["Status", "Count"]
 
     fig2 = px.bar(heal_counts, x="Status", y="Count",
-                  title="HEAL Questionnaire Completion", text="Count", color="Status")
+                  title="HEAL_QX Status", text="Count", color="Status")
     st.plotly_chart(fig2)
 
 # -------------------------------
@@ -149,7 +149,7 @@ if "asa_qx_date" in df.columns and "redcap_event_name" in df.columns:
         color="asa_status",
         category_orders={"asa_event_label": event_order},
         barmode="group",
-        title="ASA24 Participation by Recall",
+        title="ASA24 Recall",
         text="Count"
     )
     fig_asa.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
@@ -191,11 +191,12 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
         color="act_status",
         category_orders={"act_event_label": event_order},
         barmode="group",
-        title="ACT Participation by Recall",
+        title="ACT24 Recall",
         text="Count"
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
