@@ -32,11 +32,21 @@ st.image(
     "https://raw.githubusercontent.com/debbie-addey/HealDashboard/main/images/Atlantic%20PATH%20LOGO%20MASTER1.jpg",
     use_container_width=True
 )
+st.markdown("""
+    <style>
+        div[data-testid="stMetricLabel"] > div {
+            white-space: normal;
+            text-align: center;
+            line-height: 1.1em;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 
 # -------------------------------
 # KPIs
 # -------------------------------
-consented_count = (df["consent_complete"] == "2").sum()
+consented_count = (df["participation_status"] == "1").sum()
 invited_count = (df["administrative_complete"]=="2").sum()
 
 # Recall 1 invited = HEAL completed
@@ -61,7 +71,7 @@ col2.metric("Recall 1 Invited", recall1_invited)
 col3.metric("Recall 2 Invited", recall2_invited)
 col4.metric("Recall 3 Invited", recall3_invited)
 col5.metric("Recall 4 Invited", recall4_invited)
-col6.metric("Completed Consents", consented_count)
+col6.metric("Total Participating", consented_count)
 
 
 # -------------------------------
@@ -186,6 +196,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
