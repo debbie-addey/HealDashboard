@@ -46,7 +46,7 @@ st.markdown("""
 # -------------------------------
 # KPIs
 # -------------------------------
-consented_count = (df["participation_status"] == "1").sum()
+consented_count = (df["consent_complete"] == "2").sum()
 invited_count = (df["administrative_complete"]=="2").sum()
 
 # Recall 1 invited = HEAL completed
@@ -66,12 +66,12 @@ total_invited = invited_count
 
 # Layout: 6 KPIs in one row
 col1, col6, col2, col3, col4, col5 = st.columns(6)
-col1.metric("Total Invited", total_invited)
-col2.metric("Recall 1 Invited", recall1_invited)
-col3.metric("Recall 2 Invited", recall2_invited)
-col4.metric("Recall 3 Invited", recall3_invited)
-col5.metric("Recall 4 Invited", recall4_invited)
-col6.metric("Total Participating", consented_count)
+col1.metric("Invited", total_invited)
+col2.metric("Recall1 Invited", recall1_invited)
+col3.metric("Recall2 Invited", recall2_invited)
+col4.metric("Recall3 Invited", recall3_invited)
+col5.metric("Recall4 Invited", recall4_invited)
+col6.metric("Consented", consented_count)
 
 
 # -------------------------------
@@ -196,6 +196,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
