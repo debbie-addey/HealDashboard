@@ -96,7 +96,7 @@ else:
 participation_counts = df_consented["participation_status_label"].value_counts().reset_index()
 participation_counts.columns = ["Status", "Count"]
 
-valid_participation_counts = participation_counts[participation_counts["Status"].isin(["Agreed to Participate", "Declined to Participate"])]
+#valid_participation_counts = participation_counts[participation_counts["Status"].isin(["Agreed to Participate", "Declined to Participate"])]
 
 fig1 = px.bar(
     valid_participation_counts,
@@ -217,6 +217,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
