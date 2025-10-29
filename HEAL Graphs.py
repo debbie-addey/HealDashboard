@@ -85,7 +85,7 @@ col2.metric("Recall1 Invited", recall1_invited)
 col3.metric("Recall2 Invited", recall2_invited)
 col4.metric("Recall3 Invited", recall3_invited)
 col5.metric("Recall4 Invited", recall4_invited)
-col6.metric("Consented", valid_participation_counts)
+col6.metric("Consented", consented_count)
 
 
 # -------------------------------
@@ -224,6 +224,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
