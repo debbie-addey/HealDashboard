@@ -46,7 +46,7 @@ st.markdown("""
 # -------------------------------
 # KPIs
 # -------------------------------
-
+df_consented = df[df["consent_complete"] == "2"].count()
 invited_count = (df["administrative_complete"]=="2").sum()
 
 # Filter for participants who have completed consent (consent_complete == "2")
@@ -58,9 +58,6 @@ df_consented["participation_status_label"] = df_consented["participation_status"
 
 # Count the number of participants who have either Agreed or Declined to Participate
 consented_count = df_consented.shape[0]  # This gives the total number of consented participants (both Agreed and Declined)
-
-# Update the "Consented" KPI
-col6.metric("Consented", consented_count)
 
 
 
