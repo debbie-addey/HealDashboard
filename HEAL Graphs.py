@@ -55,19 +55,6 @@ df_consented = df[df["consent_complete"] == "2"].copy()
 # Count total consented participants
 consented_count = df_consented.shape[0]
 
-# Map participation status
-if "participation_status" in df_consented.columns:
-    df_consented["participation_status"] = df_consented["participation_status"].astype(str)
-    participation_map = {"0": "Declined to Participate", "1": "Agreed to Participate"}
-    df_consented["participation_status_label"] = df_consented["participation_status"].map(participation_map)
-else:
-    df_consented["participation_status_label"] = "Unknown"
-
-
-# Count Agreed vs Declined
-participation_counts = df_consented["participation_status_label"].value_counts().reset_index()
-participation_counts.columns = ["Status", "Count"]
-
 
 
 # Recall 1 invited = HEAL completed
@@ -98,9 +85,17 @@ col6.metric("Consented", consented_count)
 # -------------------------------
 # Participation Status Breakdown
 # -------------------------------
+# Map participation status
 if "participation_status" in df_consented.columns:
-    participation_counts = df_consented["participation_status_label"].value_counts().reset_index()
-    participation_counts.columns = ["Status", "Count"]
+    df_consented["participation_status"] = df_consented["participation_status"].astype(str)
+    participation_map = {"0": "Declined to Participate", "1": "Agreed to Participate"}
+    df_consented["participation_status_label"] = df_consented["participation_status"].map(participation_map)
+else:
+    df_consented["participation_status_label"] = "Unknown"
+    
+# Count Agreed vs Declined
+participation_counts = df_consented["participation_status_label"].value_counts().reset_index()
+participation_counts.columns = ["Status", "Count"]
 
     fig1 = px.bar(
         participation_counts,
@@ -221,6 +216,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
