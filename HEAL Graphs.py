@@ -46,8 +46,21 @@ st.markdown("""
 # -------------------------------
 # KPIs
 # -------------------------------
-consented_count = (df["consent_complete"] == "2")
+
 invited_count = (df["administrative_complete"]=="2").sum()
+
+# Filter for participants who have completed consent (consent_complete == "2")
+df_consented = df[df["consent_complete"] == "2"]
+
+# Ensure that participation_status is mapped correctly (1 = Agreed, 0 = Declined)
+participation_map = {"0": "Declined to Participate", "1": "Agreed to Participate"}
+df_consented["participation_status_label"] = df_consented["participation_status"].map(participation_map)
+
+# Count the number of participants who have either Agreed or Declined to Participate
+consented_count = df_consented.shape[0]  # This gives the total number of consented participants (both Agreed and Declined)
+
+# Update the "Consented" KPI
+col6.metric("Consented", consented_count)
 
 
 
@@ -198,6 +211,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
