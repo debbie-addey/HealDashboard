@@ -46,7 +46,7 @@ st.markdown("""
 # -------------------------------
 # KPIs
 # -------------------------------
-df_consented = df[df["consent_complete"] == "2"]
+#df_consented = df[df["consent_complete"] == "2"]
 invited_count = (df["administrative_complete"]=="2").sum()
 
 # Filter for participants who have completed consent (consent_complete == "2")
@@ -208,6 +208,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
