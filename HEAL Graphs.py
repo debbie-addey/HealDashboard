@@ -49,6 +49,27 @@ st.markdown("""
 df["consent_complete"] = df["consent_complete"].astype(str)
 invited_count = (df["administrative_complete"]=="2").sum()
 
+# Filter for participants who have completed consent
+df_consented = df[df["consent_complete"] == "2"].copy()
+
+# Count total consented participants
+consented_count = df_consented.shape[0]
+
+# Map participation status
+if "participation_status" in df_consented.columns:
+    df_consented["participation_status"] = df_consented["participation_status"].astype(str)
+    participation_map = {"0": "Declined to Participate", "1": "Agreed to Participate"}
+    df_consented["participation_status_label"] = df_consented["participation_status"].map(participation_map)
+else:
+    df_consented["participation_status_label"] = "Unknown"
+
+
+# Count Agreed vs Declined
+participation_counts = df_consented["participation_status_label"].value_counts().reset_index()
+participation_counts.columns = ["Status", "Count"]
+
+
+
 # Recall 1 invited = HEAL completed
 recall1_invited = (df["heal_qx_complete"] == "2").sum() if "heal_qx_complete" in df.columns else 0
 
@@ -200,6 +221,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
