@@ -54,7 +54,7 @@ df_consented = df[df["consent_complete"] == "2"].copy()
 
 # Count total consented participants
 consented_count = df_consented.shape[0]
-
+valid_participation_counts = participation_counts[participation_counts["Status"].isin(["Agreed to Participate", "Declined to Participate"])]
 
 # Recall 1 invited = HEAL completed
 recall1_invited = (df["heal_qx_complete"] == "2").sum() if "heal_qx_complete" in df.columns else 0
@@ -78,7 +78,7 @@ col2.metric("Recall1 Invited", recall1_invited)
 col3.metric("Recall2 Invited", recall2_invited)
 col4.metric("Recall3 Invited", recall3_invited)
 col5.metric("Recall4 Invited", recall4_invited)
-col6.metric("Consented", consented_count)
+col6.metric("Consented", valid_participation_counts)
 
 
 # -------------------------------
@@ -96,7 +96,7 @@ else:
 participation_counts = df_consented["participation_status_label"].value_counts().reset_index()
 participation_counts.columns = ["Status", "Count"]
 
-#valid_participation_counts = participation_counts[participation_counts["Status"].isin(["Agreed to Participate", "Declined to Participate"])]
+valid_participation_counts = participation_counts[participation_counts["Status"].isin(["Agreed to Participate", "Declined to Participate"])]
 
 fig1 = px.bar(
     valid_participation_counts,
@@ -217,6 +217,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
