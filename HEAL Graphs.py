@@ -89,16 +89,20 @@ col6.metric("Consented", consented_count)
 # -------------------------------
 # Participation Status Breakdown
 # -------------------------------
-if "participation_status" in df.columns:
-    participation_map = {"0": "Declined to Participate", "1": "Agreed to Participate"}
-    df["participation_status_label"] = df["participation_status"].map(participation_map)
-
-    participation_counts = df["participation_status_label"].value_counts().reset_index()
+if "participation_status" in df_consented.columns:
+    participation_counts = df_consented["participation_status_label"].value_counts().reset_index()
     participation_counts.columns = ["Status", "Count"]
 
-    fig1 = px.bar(participation_counts, x="Status", y="Count",
-                  title="Consent Status", text="Count", color="Status")
+    fig1 = px.bar(
+        participation_counts,
+        x="Status",
+        y="Count",
+        title="Consent Status",
+        text="Count",
+        color="Status"
+    )
     st.plotly_chart(fig1)
+
 
 # -------------------------------
 # HEAL Completion Status Breakdown
@@ -208,6 +212,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
