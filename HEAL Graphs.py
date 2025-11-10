@@ -165,6 +165,9 @@ if "heal_qx_complete" in df.columns:
 
     st.plotly_chart(fig2)
 
+
+
+
 # -------------------------------
 # Define Event Name Mapping and Order
 # -------------------------------
@@ -259,6 +262,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
