@@ -128,13 +128,13 @@ if "heal_qx_complete" in df.columns:
 
     # 2️⃣ In Progress: heal_qx_complete = '0' AND today_date not null
     df.loc[
-        (df["heal_qx_complete"] == "0") & (df["today_date"].notna()),
+        (df["heal_qx_complete"] == "0") & (df["today_date"]!=''),
         "heal_qx_complete_label"
     ] = "In Progress"
 
     # 3️⃣ Not Started: heal_qx_complete = '0' AND today_date null
     df.loc[
-        (df["heal_qx_complete"] == "0") & (df["today_date"].isna()),
+        (df["heal_qx_complete"] == "0") & (df["today_date"]==''),
         "heal_qx_complete_label"
     ] = "Not Started"
 
@@ -259,6 +259,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
