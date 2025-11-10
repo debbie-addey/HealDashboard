@@ -120,14 +120,38 @@ if not participation_counts.empty:
 # HEAL Completion Status Breakdown
 # -------------------------------
 if "heal_qx_complete" in df.columns:
+    # Create base label
     heal_map = {"0": "Incomplete / Not Started", "2": "Complete"}
     df["heal_qx_complete_label"] = df["heal_qx_complete"].map(heal_map)
 
+    # Identify incomplete but started (today_date filled but heal_qx_complete = '0')
+    df.loc[
+        (df["heal_qx_complete"] == "0") & (df["today_date"].notna()),
+        "heal_qx_complete_label"
+    ] = "In Progress"
+
+    # Count statuses
     heal_counts = df["heal_qx_complete_label"].value_counts().reset_index()
     heal_counts.columns = ["Status", "Count"]
 
-    fig2 = px.bar(heal_counts, x="Status", y="Count",
-                  title="HEAL_QX Status", text="Count", color="Status")
+    # Create Plotly bar chart
+    fig2 = px.bar(
+        heal_counts,
+        x="Status",
+        y="Count",
+        title="HEAL_QX Status",
+        text="Count",
+        color="Status",
+        color_discrete_map={
+            "Complete": "#2ca02c",
+            "In Progress": "#ff7f0e",
+            "Incomplete / Not Started": "#d62728"
+        }
+    )
+
+    fig2.update_traces(textposition='outside')
+    fig2.update_layout(yaxis_title="Number of Records", xaxis_title="Status")
+
     st.plotly_chart(fig2)
 
 # -------------------------------
@@ -224,6 +248,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
