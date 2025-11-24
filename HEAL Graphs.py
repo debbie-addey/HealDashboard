@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 
 # -------------------------------
-# REDCap API Config
+# REDCap API Config 
 # -------------------------------
 API_URL = 'https://redcap.bccrc.ca/api/'
 API_TOKEN = st.secrets ["REDCAP_API_TOKEN"]
@@ -263,6 +263,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
