@@ -134,10 +134,10 @@ if "heal_qx_complete" in df.columns:
     ] = "In Progress"
 
     # 3️⃣ Not Started: heal_qx_complete = '0' AND today_date null
-    df.loc[
-        (df["heal_qx_complete"] == "0") & (df["today_date"]==''),
-        "heal_qx_complete_label"
-    ] = "Not Started"
+   # df.loc[
+     #   (df["heal_qx_complete"] == "0") & (df["today_date"]==''),
+     #   "heal_qx_complete_label"
+   # ] = "Not Started"
 
     # Count categories
     heal_counts = df["heal_qx_complete_label"].value_counts().reset_index()
@@ -154,7 +154,7 @@ if "heal_qx_complete" in df.columns:
         color_discrete_map={
             "Complete": "#2ca02c",
             "In Progress": "#ff7f0e",
-            "Not Started": "#d62728"
+        #    "Not Started": "#d62728"
         }
     )
 
@@ -263,6 +263,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
