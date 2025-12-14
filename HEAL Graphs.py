@@ -64,7 +64,18 @@ consented_count = df_consented.shape[0]
 
 
 # Recall 1 invited = HEAL completed
-recall1_invited = (df["heal_qx_complete"] == "2").sum() if "heal_qx_complete" in df.columns else 0
+heal_completed_natural = (
+    (df["heal_qx_complete"] == "2") &
+    (df["hlq_status"] != "force_complete")
+).sum()
+
+heal_completed_forced = (
+    (df["heal_qx_complete"] == "2") &
+    (df["hlq_status"] == "force_complete")
+).sum()
+
+heal_completed_total = heal_completed_natural + heal_completed_forced
+
 
 # Recall 2 invited = enrolment arm flag
 recall2_invited = ((df["redcap_event_name"] == "enrolment_arm_1") & (df["asa_act_complete"] == "1")).sum()
@@ -81,12 +92,18 @@ total_invited = invited_count
 # Layout: 6 KPIs in one row
 col1, col6, col7, col2, col3, col4, col5 = st.columns(7)
 col1.metric("Invited", total_invited)
-col7.metric("HEAL Done", recall1_invited)
+col7.metric("HEAL Done", heal_completed_total)
 col2.metric("Recall1 Invited", recall1_invited)
 col3.metric("Recall2 Invited", recall2_invited)
 col4.metric("Recall3 Invited", recall3_invited)
 col5.metric("Recall4 Invited", recall4_invited)
 col6.metric("Consented", consented_count)
+
+# Ensure hlq_status exists
+if "hlq_status" in df.columns:
+    df["hlq_status"] = df["hlq_status"].astype(str)
+else:
+    df["hlq_status"] = ""
 
 
 # -------------------------------
@@ -118,55 +135,61 @@ if not participation_counts.empty:
 
 
 # -------------------------------
-# HEAL Completion Status Breakdown
+# HEAL Completion Status Breakdown (with Force Complete)
 # -------------------------------
 if "heal_qx_complete" in df.columns:
-    # Create base label
+
+    df["heal_qx_complete"] = df["heal_qx_complete"].astype(str)
+    df["today_date"] = df["today_date"].astype(str)
+
     df["heal_qx_complete_label"] = None
 
-    # 1️⃣ Complete
-    df.loc[df["heal_qx_complete"] == "2", "heal_qx_complete_label"] = "Complete"
-
-    # 2️⃣ In Progress: heal_qx_complete = '0' AND today_date not null
+    # 1️⃣ Force Complete
     df.loc[
-        (df["heal_qx_complete"] == "0") & (df["today_date"]!=''),
+        (df["heal_qx_complete"] == "2") & (df["hlq_status"] == "force_complete"),
+        "heal_qx_complete_label"
+    ] = "Force Complete"
+
+    # 2️⃣ Complete (natural)
+    df.loc[
+        (df["heal_qx_complete"] == "2") & (df["hlq_status"] != "force_complete"),
+        "heal_qx_complete_label"
+    ] = "Complete"
+
+    # 3️⃣ In Progress
+    df.loc[
+        (df["heal_qx_complete"] == "0") & (df["today_date"].str.strip() != ""),
         "heal_qx_complete_label"
     ] = "In Progress"
 
-    # 3️⃣ Not Started: heal_qx_complete = '0' AND today_date null
-   # df.loc[
-     #   (df["heal_qx_complete"] == "0") & (df["today_date"]==''),
-     #   "heal_qx_complete_label"
-   # ] = "Not Started"
-
-    # Count categories
-    heal_counts = df["heal_qx_complete_label"].value_counts().reset_index()
+    heal_counts = (
+        df["heal_qx_complete_label"]
+        .value_counts()
+        .reset_index()
+    )
     heal_counts.columns = ["Status", "Count"]
 
-    # Bar chart
     fig2 = px.bar(
         heal_counts,
         x="Status",
         y="Count",
-        title="HEAL_QX Status",
+        title="HEAL Qx Status",
         text="Count",
         color="Status",
         color_discrete_map={
             "Complete": "#2ca02c",
+            "Force Complete": "#1f77b4",
             "In Progress": "#ff7f0e",
-        #    "Not Started": "#d62728"
         }
     )
 
     fig2.update_traces(textposition="outside")
     fig2.update_layout(
-        yaxis_title="Number of Records",
+        yaxis_title="Number of Participants",
         xaxis_title="Status"
     )
 
     st.plotly_chart(fig2)
-
-
 
 
 # -------------------------------
@@ -263,6 +286,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
