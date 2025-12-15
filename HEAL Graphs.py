@@ -184,6 +184,7 @@ if required_cols.issubset(df.columns):
     # 3️⃣ In Progress
     heal_df.loc[
         (heal_df["heal_qx_complete"] == "0") &
+        (heal_df["hlq_status"] != "force_complete") &
         (heal_df["today_date"].notna()),
         "heal_qx_complete_label"
     ] = "In Progress"
@@ -323,6 +324,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
