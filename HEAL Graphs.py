@@ -65,12 +65,12 @@ consented_count = df_consented.shape[0]
 
 # Recall 1 invited = HEAL completed
 heal_completed_natural = (
-    (df["heal_qx_complete"] != "2") &
+    (df["heal_qx_complete"] == "2") &
     (df["hlq_status"] != "force_complete")
 ).sum()
 
 heal_completed_forced = (
-    (df["heal_qx_complete"] == "2") &
+    (df["heal_qx_complete"] != "2") &
     (df["hlq_status"] == "force_complete")
 ).sum()
 
@@ -288,6 +288,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
