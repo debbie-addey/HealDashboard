@@ -92,7 +92,7 @@ recall4_invited = ((df["redcap_event_name"] == "followup2_arm_1") & (df["asa_act
 total_invited = invited_count
 
 # Layout: 6 KPIs in one row
-col1, col6, col7, col2, col3, col4, col5 = st.columns(7)
+col1, col6, col7, col8,col2, col3, col4, col5 = st.columns(8)
 col1.metric("Invited", total_invited)
 col7.metric("HEAL Done", heal_completed_total)
 col8.metric("Force Complete", heal_completed_forced)
@@ -289,6 +289,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
