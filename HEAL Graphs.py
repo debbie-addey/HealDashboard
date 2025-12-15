@@ -142,29 +142,34 @@ if not participation_counts.empty:
 # -------------------------------
 if "heal_qx_complete" in df.columns:
 
+    # Ensure correct data types
     df["heal_qx_complete"] = df["heal_qx_complete"].astype(str)
-    df["today_date"] = df["today_date"].astype(str)
+    df["today_date"] = pd.to_datetime(df["today_date"], errors="coerce")
 
-    df["heal_qx_complete_label"] = None
+    # Default label
+    df["heal_qx_complete_label"] = "Not Started"
 
-    # 1️⃣ Force Complete
+    # 1️⃣ Force Complete (highest priority)
     df.loc[
-        (df["heal_qx_complete"] != "2") & (df["hlq_status"] == "force_complete"),
+        df["hlq_status"] == "force_complete",
         "heal_qx_complete_label"
     ] = "Force Complete"
 
     # 2️⃣ Complete (natural)
     df.loc[
-        (df["heal_qx_complete"] == "2") & (df["hlq_status"] != "force_complete"),
+        (df["heal_qx_complete"] == "2") &
+        (df["hlq_status"] != "force_complete"),
         "heal_qx_complete_label"
     ] = "Complete"
 
     # 3️⃣ In Progress
     df.loc[
-        (df["heal_qx_complete"] == "0") & (df["today_date"].str.strip() != ""),
+        (df["heal_qx_complete"] == "0") &
+        (df["today_date"].notna()),
         "heal_qx_complete_label"
     ] = "In Progress"
 
+    # Aggregate counts
     heal_counts = (
         df["heal_qx_complete_label"]
         .value_counts()
@@ -172,6 +177,7 @@ if "heal_qx_complete" in df.columns:
     )
     heal_counts.columns = ["Status", "Count"]
 
+    # Plot
     fig2 = px.bar(
         heal_counts,
         x="Status",
@@ -183,6 +189,7 @@ if "heal_qx_complete" in df.columns:
             "Complete": "#2ca02c",
             "Force Complete": "#1f77b4",
             "In Progress": "#ff7f0e",
+            "Not Started": "#d62728",
         }
     )
 
@@ -193,6 +200,7 @@ if "heal_qx_complete" in df.columns:
     )
 
     st.plotly_chart(fig2)
+
 
 
 # -------------------------------
@@ -289,6 +297,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
