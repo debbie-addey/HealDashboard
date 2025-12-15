@@ -148,7 +148,7 @@ if "heal_qx_complete" in df.columns:
 
     # 1️⃣ Force Complete
     df.loc[
-        (df["heal_qx_complete"] == "2") & (df["hlq_status"] == "force_complete"),
+        (df["heal_qx_complete"] != "2") & (df["hlq_status"] == "force_complete"),
         "heal_qx_complete_label"
     ] = "Force Complete"
 
@@ -288,6 +288,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
