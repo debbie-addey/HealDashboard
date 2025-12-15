@@ -75,6 +75,8 @@ heal_completed_forced = (
 ).sum()
 
 heal_completed_total = heal_completed_natural + heal_completed_forced
+heal_completed_total = int(heal_completed_total)
+
 
 
 # Recall 2 invited = enrolment arm flag
@@ -286,6 +288,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
