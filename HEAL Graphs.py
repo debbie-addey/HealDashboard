@@ -137,54 +137,77 @@ if not participation_counts.empty:
     st.plotly_chart(fig1)
 
 
-# -------------------------------
-# HEAL Completion Status Breakdown (with Force Complete)
-# -------------------------------
-if "heal_qx_complete" in df.columns:
+# ======================================================
+# HEAL Qx Status Breakdown (final, reconciled version)
+# ======================================================
 
-    # Ensure correct data types
-    df["heal_qx_complete"] = df["heal_qx_complete"].astype(str)
-    df["today_date"] = pd.to_datetime(df["today_date"], errors="coerce")
+# Safety check
+required_cols = {
+    "study_id",
+    "heal_qx_complete",
+    "hlq_status",
+    "today_date",
+    "redcap_event_name"
+}
 
-    # Default label
-    df["heal_qx_complete_label"] = "Not Started"
+if required_cols.issubset(df.columns):
 
-    # 1️⃣ Force Complete (highest priority)
-    df.loc[
-        df["hlq_status"] == "force_complete",
+    # --------------------------------------------------
+    # 1. Scope to HEAL Qx event (CRITICAL)
+    # --------------------------------------------------
+    heal_df = df[df["redcap_event_name"] == "enrolment_arm_1"].copy()
+
+    # --------------------------------------------------
+    # 2. Normalize data types
+    # --------------------------------------------------
+    heal_df["heal_qx_complete"] = heal_df["heal_qx_complete"].astype(str)
+    heal_df["today_date"] = pd.to_datetime(heal_df["today_date"], errors="coerce")
+
+    # --------------------------------------------------
+    # 3. Assign status labels (ordered, exclusive)
+    # --------------------------------------------------
+    heal_df["heal_qx_complete_label"] = "Not Started"
+
+    # 1️⃣ Force Complete
+    heal_df.loc[
+        heal_df["hlq_status"] == "force_complete",
         "heal_qx_complete_label"
     ] = "Force Complete"
 
     # 2️⃣ Complete (natural)
-    df.loc[
-        (df["heal_qx_complete"] == "2") &
-        (df["hlq_status"] != "force_complete"),
+    heal_df.loc[
+        (heal_df["heal_qx_complete"] == "2") &
+        (heal_df["hlq_status"] != "force_complete"),
         "heal_qx_complete_label"
     ] = "Complete"
 
     # 3️⃣ In Progress
-    df.loc[
-        (df["heal_qx_complete"] == "0") &
-        (df["today_date"].notna()),
+    heal_df.loc[
+        (heal_df["heal_qx_complete"] == "0") &
+        (heal_df["today_date"].notna()),
         "heal_qx_complete_label"
     ] = "In Progress"
 
-    # Aggregate counts
+    # --------------------------------------------------
+    # 4. Aggregate counts (UNIQUE participants)
+    # --------------------------------------------------
     heal_counts = (
-        df["heal_qx_complete_label"]
-        .value_counts()
-        .reset_index()
+        heal_df
+        .groupby("heal_qx_complete_label")["study_id"]
+        .nunique()
+        .reset_index(name="Count")
     )
-    heal_counts.columns = ["Status", "Count"]
 
-    # Plot
-    fig2 = px.bar(
+    # --------------------------------------------------
+    # 5. Plot
+    # --------------------------------------------------
+    fig = px.bar(
         heal_counts,
-        x="Status",
+        x="heal_qx_complete_label",
         y="Count",
         title="HEAL Qx Status",
         text="Count",
-        color="Status",
+        color="heal_qx_complete_label",
         color_discrete_map={
             "Complete": "#2ca02c",
             "Force Complete": "#1f77b4",
@@ -193,13 +216,16 @@ if "heal_qx_complete" in df.columns:
         }
     )
 
-    fig2.update_traces(textposition="outside")
-    fig2.update_layout(
-        yaxis_title="Number of Participants",
-        xaxis_title="Status"
+    fig.update_traces(textposition="outside")
+    fig.update_layout(
+        xaxis_title="Status",
+        yaxis_title="Number of Participants"
     )
 
-    st.plotly_chart(fig2)
+    st.plotly_chart(fig)
+
+else:
+    st.warning("Required HEAL Qx columns are missing from the dataset.")
 
 
 
@@ -297,6 +323,7 @@ if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
     )
     fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
     st.plotly_chart(fig_act)
+
 
 
 
