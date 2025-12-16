@@ -83,13 +83,15 @@ heal_completed_total = int(heal_completed_total)
 
 
 # Recall 2 invited = enrolment arm flag
-recall2_invited = ((df["redcap_event_name"] == "enrolment_arm_1") & (df["asa_act_complete"] == "1")).sum()
+#recall2_invited = ((df["redcap_event_name"] == "enrolment_arm_1") & (df["asa_act_complete"] == "1")).sum()
 
 # Recall 3 invited = followup arm flag
-recall3_invited = ((df["redcap_event_name"] == "followup_arm_1") & (df["asa_act_complete"] == "1")).sum()
+#recall3_invited = ((df["redcap_event_name"] == "followup_arm_1") & (df["asa_act_complete"] == "1")).sum()
 
 # Recall 4 invited = followup2 arm flag
-recall4_invited = ((df["redcap_event_name"] == "followup2_arm_1") & (df["asa_act_complete"] == "1")).sum()
+#recall4_invited = ((df["redcap_event_name"] == "followup2_arm_1") & (df["asa_act_complete"] == "1")).sum()
+
+
 
 # Total invited across all recalls
 total_invited = invited_count
@@ -150,12 +152,13 @@ required_cols = {
     "heal_qx_complete",
     "hlq_status",
     "today_date",
+    "participation_status",
     "redcap_event_name"
 }
 
 if required_cols.issubset(df.columns):
 
-    # --------------------------------------------------
+  # --------------------------------------------------
     # 1. Scope to HEAL Qx event (CRITICAL)
     # --------------------------------------------------
     heal_df = df[df["redcap_event_name"] == "enrolment_arm_1"].copy()
@@ -164,12 +167,13 @@ if required_cols.issubset(df.columns):
     # 2. Normalize data types
     # --------------------------------------------------
     heal_df["heal_qx_complete"] = heal_df["heal_qx_complete"].astype(str)
+    heal_df["participation_status"] = heal_df["participation_status"].astype(str)
     heal_df["today_date"] = pd.to_datetime(heal_df["today_date"], errors="coerce")
 
     # --------------------------------------------------
     # 3. Assign status labels (ordered, exclusive)
     # --------------------------------------------------
-    heal_df["heal_qx_complete_label"] = "Not Started"
+    heal_df["heal_qx_complete_label"] = None
 
     # 1️⃣ Force Complete
     heal_df.loc[
@@ -192,11 +196,19 @@ if required_cols.issubset(df.columns):
         "heal_qx_complete_label"
     ] = "In Progress"
 
+    # 4️⃣ Not Started ✅ FIXED LOGIC
+    heal_df.loc[
+        (heal_df["participation_status"] == "1") &
+        (heal_df["today_date"].isna()),
+        "heal_qx_complete_label"
+    ] = "Not Started"
+
     # --------------------------------------------------
     # 4. Aggregate counts (UNIQUE participants)
     # --------------------------------------------------
     heal_counts = (
         heal_df
+        .dropna(subset=["heal_qx_complete_label"])  # safety
         .groupby("heal_qx_complete_label")["study_id"]
         .nunique()
         .reset_index(name="Count")
@@ -220,7 +232,11 @@ if required_cols.issubset(df.columns):
         }
     )
 
-    fig.update_traces(textposition="outside")
+    fig.update_traces(
+        textposition="outside",
+        cliponaxis=False
+    )
+
     fig.update_layout(
         xaxis_title="Status",
         yaxis_title="Number of Participants"
@@ -230,8 +246,9 @@ if required_cols.issubset(df.columns):
 
 else:
     st.warning("Required HEAL Qx columns are missing from the dataset.")
-
-
+# ============================================================
+# recalls
+# ============================================================
 
 EVENT_ENROL = "enrolment_arm_1"
 EVENT_FU1 = "followup_arm_1"
@@ -502,6 +519,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
