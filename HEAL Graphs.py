@@ -4,6 +4,9 @@ import streamlit as st
 import plotly.express as px
 from datetime import datetime
 import os
+import streamlit as st
+from pandas.tseries.offsets import DateOffset
+import plotly.graph_objects as go
 
 # -------------------------------
 # REDCap API Config 
@@ -230,113 +233,275 @@ else:
 
 
 
-# -------------------------------
-# Define Event Name Mapping and Order
-# -------------------------------
-event_map = {
-    "enrolment_arm_1": "Recall 1",
-    "followup_arm_1": "Recall 2",
-    "followup2_arm_1": "Recall 3",
-    "followup3_arm_1": "Recall 4"
+EVENT_ENROL = "enrolment_arm_1"
+EVENT_FU1 = "followup_arm_1"
+EVENT_FU2 = "followup2_arm_1"
+EVENT_FU3 = "followup3_arm_1"
+
+RECALL1_DELAY_DAYS = 14
+RECALL2_DELAY_DAYS = 10
+RECALL3_DELAY_MONTHS = 6
+RECALL4_DELAY_DAYS = 10
+
+today_ts = pd.Timestamp.now().normalize()
+
+# ============================================================
+# STEP 1: EXPORT RECORD DATA (ALL EVENTS)
+# ============================================================
+payload_records = {
+    "token": API_TOKEN,
+    "content": "record",
+    "format": "json",
+    "type": "flat",
+    "fields[0]": "study_id",
+    "fields[1]": "heal_qx_complete",
+    "fields[2]": "hlq_status",
+    "fields[3]": "asa_act_complete",
+    "events[0]": EVENT_ENROL,
+    "events[1]": EVENT_FU1,
+    "events[2]": EVENT_FU2,
+    "events[3]": EVENT_FU3,
+    "returnFormat": "json"
 }
-event_order = ["Recall 1", "Recall 2", "Recall 3", "Recall 4"]
 
-# -------------------------------
-# ASA24 Completion Status by Event + Invited
-# -------------------------------
-if "asa_qx_date" in df.columns and "redcap_event_name" in df.columns:
-    df["asa_status"] = df["asa_qx_date"].apply(
-        lambda x: "Complete" if pd.notnull(x) and str(x).strip() != "" else "Not Complete"
+records = pd.DataFrame(
+    requests.post(API_URL, data=payload_records).json()
+)
+
+# ============================================================
+# STEP 2: SPLIT BY EVENT
+# ============================================================
+enrol_df = records[records["redcap_event_name"] == EVENT_ENROL].copy()
+fu1_df = records[records["redcap_event_name"] == EVENT_FU1].copy()
+fu2_df = records[records["redcap_event_name"] == EVENT_FU2].copy()
+fu3_df = records[records["redcap_event_name"] == EVENT_FU3].copy()
+
+# ============================================================
+# STEP 3: EXPORT LOGS
+# ============================================================
+payload_log = {
+    "token": API_TOKEN,
+    "content": "log",
+    "format": "json",
+    "logtype": "record",
+    "returnFormat": "json"
+}
+
+logs = pd.DataFrame(
+    requests.post(API_URL, data=payload_log).json()
+)
+
+logs["timestamp"] = pd.to_datetime(logs["timestamp"], errors="coerce")
+
+# ============================================================
+# STEP 4: COMPLETION TIMESTAMPS
+# ============================================================
+heal_complete = (
+    logs[logs["details"].str.contains("heal_qx_complete = '2'", na=False)]
+    .sort_values("timestamp")
+    .drop_duplicates("record", keep="last")
+    [["record", "timestamp"]]
+    .rename(columns={"record": "study_id", "timestamp": "heal_complete_time"})
+)
+
+recall1_complete = (
+    logs[logs["details"].str.contains("asa_act_complete = '1'", na=False)]
+    .sort_values("timestamp")
+    .drop_duplicates("record", keep="last")
+    [["record", "timestamp"]]
+    .rename(columns={"record": "study_id", "timestamp": "recall1_complete_time"})
+)
+
+# ============================================================
+# STEP 5: BUILD PARTICIPANT-LEVEL TABLE
+# ============================================================
+combined = (
+    enrol_df[["study_id", "heal_qx_complete", "hlq_status", "asa_act_complete"]]
+    .rename(columns={"asa_act_complete": "recall1_complete_flag"})
+    .merge(heal_complete, on="study_id", how="left")
+    .merge(recall1_complete, on="study_id", how="left")
+    .merge(
+        fu1_df[["study_id", "asa_act_complete"]]
+        .rename(columns={"asa_act_complete": "recall2_complete_flag"}),
+        on="study_id", how="left"
     )
-    df["asa_event_label"] = df["redcap_event_name"].map(event_map).fillna(df["redcap_event_name"])
-
-    # Count completions
-    asa_counts = (
-        df.groupby(["asa_event_label", "asa_status"])
-        .size()
-        .reset_index(name="Count")
+    .merge(
+        fu2_df[["study_id", "asa_act_complete"]]
+        .rename(columns={"asa_act_complete": "recall3_complete_flag"}),
+        on="study_id", how="left"
     )
+    .merge(
+        fu3_df[["study_id", "asa_act_complete"]]
+        .rename(columns={"asa_act_complete": "recall4_complete_flag"}),
+        on="study_id", how="left"
+    )
+    .drop_duplicates("study_id")
+)
 
-    # Add invited counts for recalls 2+
-    invited_rows = []
-    for ev in event_map.keys():
-        label = event_map[ev]
-        if label != "Recall 1":
-            invited_var = f"{ev}___asa_act_complete"
-            if invited_var in df.columns:
-                invited_count = (df[invited_var] == "1").sum()
-                invited_rows.append({"asa_event_label": label, "asa_status": "Invited", "Count": invited_count})
+# ============================================================
+# STEP 6: RECALL LOGIC
+# ============================================================
+# ---- Recall 1 ----
+combined["recall1_scheduled"] = (
+    (combined["heal_qx_complete"] == "2") |
+    (combined["hlq_status"] == "force_complete")
+)
 
-    asa_counts = pd.concat([asa_counts, pd.DataFrame(invited_rows)], ignore_index=True)
+combined["recall1_invited"] = (
+    combined["recall1_scheduled"] &
+    ((today_ts - combined["heal_complete_time"]).dt.days >= RECALL1_DELAY_DAYS)
+)
 
-    # Plot
-    fig_asa = px.bar(
-        asa_counts,
-        x="asa_event_label",
+combined["recall1_completed"] = combined["recall1_complete_flag"] == "1"
+
+# ---- Recall 2 ----
+combined["recall2_scheduled"] = combined["recall1_completed"]
+
+combined["recall2_invited"] = (
+    combined["recall2_scheduled"] &
+    ((today_ts - combined["recall1_complete_time"]).dt.days >= RECALL2_DELAY_DAYS)
+)
+
+combined["recall2_completed"] = combined["recall2_complete_flag"] == "1"
+
+# ---- Recall 3 ----
+combined["recall3_scheduled"] = combined["recall2_completed"]
+
+combined["recall3_invited"] = (
+    combined["recall3_scheduled"] &
+    (today_ts >= combined["recall1_complete_time"] + DateOffset(months=RECALL3_DELAY_MONTHS))
+)
+
+combined["recall3_completed"] = combined["recall3_complete_flag"] == "1"
+
+# ---- Recall 4 ----
+combined["recall4_scheduled"] = combined["recall3_completed"]
+
+combined["recall4_invited"] = (
+    combined["recall4_scheduled"] &
+    ((today_ts - combined["recall1_complete_time"]).dt.days >= RECALL4_DELAY_DAYS)
+)
+
+combined["recall4_completed"] = combined["recall4_complete_flag"] == "1"
+
+# ============================================================
+# STEP 7: SUMMARY TABLE
+# ============================================================
+recall_summary = pd.DataFrame([
+    {"Recall": "Recall 1", "Scheduled": combined["recall1_scheduled"].sum(),
+     "Invited": combined["recall1_invited"].sum(), "Completed": combined["recall1_completed"].sum()},
+    {"Recall": "Recall 2", "Scheduled": combined["recall2_scheduled"].sum(),
+     "Invited": combined["recall2_invited"].sum(), "Completed": combined["recall2_completed"].sum()},
+    {"Recall": "Recall 3", "Scheduled": combined["recall3_scheduled"].sum(),
+     "Invited": combined["recall3_invited"].sum(), "Completed": combined["recall3_completed"].sum()},
+    {"Recall": "Recall 4", "Scheduled": combined["recall4_scheduled"].sum(),
+     "Invited": combined["recall4_invited"].sum(), "Completed": combined["recall4_completed"].sum()},
+])
+
+# ============================================================
+# STEP 8: CHARTS (2×2 LAYOUT)
+# ============================================================
+#st.header("Recall Progress Overview")
+
+COLOR_MAP = {
+    "Scheduled": "#6c757d",
+    "Invited": "#f0ad4e",
+    "Completed": "#5cb85c",
+}
+
+def plot_recall(row):
+    df = pd.DataFrame({
+        "Status": ["Scheduled", "Invited", "Completed"],
+        "Count": [row["Scheduled"], row["Invited"], row["Completed"]],
+    })
+
+    fig = px.bar(
+        df,
+        x="Status",
         y="Count",
-        color="asa_status",
-        category_orders={"asa_event_label": event_order},
-        barmode="group",
-        title="ASA24 Recall",
-        text="Count"
-    )
-    fig_asa.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
-    st.plotly_chart(fig_asa)
-
-# -------------------------------
-# ACT Completion Status by Event + Invited
-# -------------------------------
-if "act_qx_date" in df.columns and "redcap_event_name" in df.columns:
-    df["act_status"] = df["act_qx_date"].apply(
-        lambda x: "Complete" if pd.notnull(x) and str(x).strip() != "" else "Not Complete"
-    )
-    df["act_event_label"] = df["redcap_event_name"].map(event_map).fillna(df["redcap_event_name"])
-
-    # Count completions
-    act_counts = (
-        df.groupby(["act_event_label", "act_status"])
-        .size()
-        .reset_index(name="Count")
+        color="Status",
+        text="Count",
+        title=row.name,
+        color_discrete_map=COLOR_MAP
     )
 
-    # Add invited counts for recalls 2+
-    invited_rows = []
-    for ev in event_map.keys():
-        label = event_map[ev]
-        if label != "Recall 1":
-            invited_var = f"{ev}___asa_act_complete"
-            if invited_var in df.columns:
-                invited_count = (df[invited_var] == "1").sum()
-                invited_rows.append({"act_event_label": label, "act_status": "Invited", "Count": invited_count})
+    fig.update_traces(textposition="outside")
 
-    act_counts = pd.concat([act_counts, pd.DataFrame(invited_rows)], ignore_index=True)
-
-    # Plot
-    fig_act = px.bar(
-        act_counts,
-        x="act_event_label",
-        y="Count",
-        color="act_status",
-        category_orders={"act_event_label": event_order},
-        barmode="group",
-        title="ACT24 Recall",
-        text="Count"
+    fig.update_layout(
+        yaxis_title="Participants",
+        xaxis_title="",
+        showlegend=False,   # 🔑 turn off per-chart legend
+        uniformtext_minsize=10,
+        uniformtext_mode="hide"
     )
-    fig_act.update_layout(xaxis_title="Recall", yaxis_title="Number of Participants")
-    st.plotly_chart(fig_act)
+
+    return fig
+
+
+
+import plotly.graph_objects as go
+
+def legend_only():
+    fig = go.Figure()
+
+    for label, color in COLOR_MAP.items():
+        fig.add_trace(
+            go.Scatter(
+                x=[None],            # <-- critical
+                y=[None],            # <-- critical
+                mode="markers",
+                marker=dict(
+                    size=14,
+                    color=color,
+                    opacity=1          # legend uses this
+                ),
+                name=label,
+                showlegend=True,
+                hoverinfo="skip"
+            )
+        )
+
+    fig.update_layout(
+        legend_title_text="Stage",
+        xaxis_visible=False,
+        yaxis_visible=False,
+        margin=dict(l=0, r=0, t=10, b=0),
+        height=180
+    )
+
+    return fig
 
 
 
 
 
 
+st.header("Recall Progress Overview")
 
+# Index for easy lookup
+r = recall_summary.set_index("Recall")
 
+# Main layout: charts + legend
+main_col, legend_col = st.columns([4, 1])
 
+with main_col:
+    # ---- ROW 1 ----
+    col1, col2 = st.columns(2)
+    with col1:
+        st.plotly_chart(plot_recall(r.loc["Recall 1"]), use_container_width=True)
+    with col2:
+        st.plotly_chart(plot_recall(r.loc["Recall 2"]), use_container_width=True)
 
+    # ---- ROW 2 ----
+    col3, col4 = st.columns(2)
+    with col3:
+        st.plotly_chart(plot_recall(r.loc["Recall 3"]), use_container_width=True)
+    with col4:
+        st.plotly_chart(plot_recall(r.loc["Recall 4"]), use_container_width=True)
 
-
-
+with legend_col:
+    st.markdown("### Legend")
+    st.plotly_chart(legend_only(), use_container_width=True)
 
 
 
