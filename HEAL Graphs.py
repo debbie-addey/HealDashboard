@@ -99,7 +99,7 @@ total_invited = invited_count
 # Layout: 6 KPIs in one row
 col1, col6, col7, col8 = st.columns(4)
 col1.metric("Invited", total_invited)
-col7.metric("HEAL Done", heal_completed_total)
+col7.metric("HEAL QX Completed", heal_completed_total)
 col8.metric("Force Complete", heal_completed_forced)
 #col2.metric("Recall1 Invited", heal_completed_total)
 #col3.metric("Recall2 Invited", recall2_invited)
@@ -519,6 +519,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
