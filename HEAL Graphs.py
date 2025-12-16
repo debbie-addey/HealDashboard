@@ -151,8 +151,8 @@ if required_cols.issubset(df_consented.columns):
 
     # 3️⃣ Not Started Yet
     df_consented.loc[
-        (df_consented["consent_complete"] != "2") &
-        (df_consented["stop_contact"] == "0"),
+        (df_consented["consent_complete"] != "2") 
+        #(df_consented["stop_contact"] == "0"),
         "participation_status_label"
     ] = "Not Started Yet"
 
@@ -573,6 +573,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
