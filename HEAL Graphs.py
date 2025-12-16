@@ -115,31 +115,85 @@ else:
 
 
 # -------------------------------
-# Participation Status Breakdown
+# Participation / Consent Status Breakdown (NO OVERLAPS)
 # -------------------------------
-# Map participation status
-if "participation_status" in df_consented.columns:
-    df_consented["participation_status"] = df_consented["participation_status"].astype(str)
-    participation_map = {"0": "Declined to Participate", "1": "Agreed to Participate"}
-    df_consented["participation_status_label"] = df_consented["participation_status"].map(participation_map)
-else:
-    df_consented["participation_status_label"] = "Unknown"
-    
-# Count Agreed vs Declined
-participation_counts = df_consented["participation_status_label"].value_counts().reset_index()
-participation_counts.columns = ["Status", "Count"]
 
-if not participation_counts.empty:
+required_cols = {
+    "study_id",
+    "participation_status",
+    "consent_complete",
+    "stop_contact"
+}
+
+if required_cols.issubset(df_consented.columns):
+
+    # Normalize types
+    df_consented["participation_status"] = df_consented["participation_status"].astype(str)
+    df_consented["consent_complete"] = df_consented["consent_complete"].astype(str)
+    df_consented["stop_contact"] = df_consented["stop_contact"].astype(str)
+
+    # Initialize label
+    df_consented["participation_status_label"] = None
+
+    # 1️⃣ Agreed to Participate
+    df_consented.loc[
+        (df_consented["participation_status"] == "1") &
+        (df_consented["consent_complete"] == "2"),
+        "participation_status_label"
+    ] = "Agreed to Participate"
+
+    # 2️⃣ Declined to Participate
+    df_consented.loc[
+        (df_consented["participation_status"] == "0") &
+        (df_consented["consent_complete"] == "2"),
+        "participation_status_label"
+    ] = "Declined to Participate"
+
+    # 3️⃣ Not Started Yet
+    df_consented.loc[
+        (df_consented["consent_complete"] != "2") &
+        (df_consented["stop_contact"] == "0"),
+        "participation_status_label"
+    ] = "Not Started Yet"
+
+    # Aggregate counts (unique participants)
+    participation_counts = (
+        df_consented
+        .dropna(subset=["participation_status_label"])
+        .groupby("participation_status_label")["study_id"]
+        .nunique()
+        .reset_index(name="Count")
+    )
+
+    # Plot
     fig1 = px.bar(
         participation_counts,
-        x="Status",
+        x="participation_status_label",
         y="Count",
-        title="Consent Status",
+        title="Participation & Consent Status",
         text="Count",
-        color="Status"
+        color="participation_status_label",
+        color_discrete_map={
+            "Agreed to Participate": "#2ca02c",
+            "Declined to Participate": "#d62728",
+            "Not Started Yet": "#ff7f0e",
+        }
     )
-    fig1.update_layout(yaxis_title="Number of Participants", xaxis_title="Consent Status")
-    st.plotly_chart(fig1)
+
+    fig1.update_traces(
+        textposition="outside",
+        cliponaxis=False
+    )
+
+    fig1.update_layout(
+        yaxis_title="Number of Participants",
+        xaxis_title="Status"
+    )
+
+    st.plotly_chart(fig1, use_container_width=True)
+
+else:
+    st.warning("Required participation / consent columns are missing.")
 
 
 # ======================================================
@@ -519,6 +573,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
