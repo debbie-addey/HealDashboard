@@ -170,10 +170,7 @@ if required_cols.issubset(df_consented.columns):
     # (no consent signature fields filled)
     # --------------------------------------------------
     df_consented.loc[
-        (df_consented["consent_sig_first_name"] == "") &
-        (df_consented["consent_sig_last_name"] == "") &
-        (df_consented["participation_status"] == "") &
-        (df_consented["consent_sig_email"] == ""),
+        (df_consented["consent_sig_first_name"] != "2") ,
         "participation_status_label"
     ] = "Not Started Yet"
 
@@ -599,6 +596,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
