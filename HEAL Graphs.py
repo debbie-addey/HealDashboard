@@ -170,7 +170,9 @@ if required_cols.issubset(df_consented.columns):
     # (no consent signature fields filled)
     # --------------------------------------------------
     df_consented.loc[
-        (df_consented["consent_sig_first_name"] != "2") ,
+        (df_consented["consent_complete"] != "2") &
+        # (df_consented["consent_complete"] == "0") &
+        (df_consented["stop_contact"] == "0"),
         "participation_status_label"
     ] = "Not Started Yet"
 
