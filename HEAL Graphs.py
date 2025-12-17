@@ -122,41 +122,63 @@ required_cols = {
     "study_id",
     "participation_status",
     "consent_complete",
-    "stop_contact"
+    "consent_sig_first_name",
+    "consent_sig_last_name",
+    "consent_sig_email"
 }
 
 if required_cols.issubset(df_consented.columns):
 
+    # --------------------------------------------------
     # Normalize types
+    # --------------------------------------------------
     df_consented["participation_status"] = df_consented["participation_status"].astype(str)
     df_consented["consent_complete"] = df_consented["consent_complete"].astype(str)
-    df_consented["stop_contact"] = df_consented["stop_contact"].astype(str)
 
+    for col in [
+        "consent_sig_first_name",
+        "consent_sig_last_name",
+        "consent_sig_email"
+    ]:
+        df_consented[col] = df_consented[col].fillna("").astype(str).str.strip()
+
+    # --------------------------------------------------
     # Initialize label
+    # --------------------------------------------------
     df_consented["participation_status_label"] = None
 
+    # --------------------------------------------------
     # 1️⃣ Agreed to Participate
+    # --------------------------------------------------
     df_consented.loc[
         (df_consented["participation_status"] == "1") &
         (df_consented["consent_complete"] == "2"),
         "participation_status_label"
     ] = "Agreed to Participate"
 
+    # --------------------------------------------------
     # 2️⃣ Declined to Participate
+    # --------------------------------------------------
     df_consented.loc[
         (df_consented["participation_status"] == "0") &
         (df_consented["consent_complete"] == "2"),
         "participation_status_label"
     ] = "Declined to Participate"
 
+    # --------------------------------------------------
     # 3️⃣ Not Started Yet
+    # (no consent signature fields filled)
+    # --------------------------------------------------
     df_consented.loc[
-        (df_consented["participation_status"] == "") ,
-        #(df_consented["stop_contact"] == "0"),
+        (df_consented["consent_sig_first_name"] == "") &
+        (df_consented["consent_sig_last_name"] == "") &
+        (df_consented["consent_sig_email"] == ""),
         "participation_status_label"
     ] = "Not Started Yet"
 
+    # --------------------------------------------------
     # Aggregate counts (unique participants)
+    # --------------------------------------------------
     participation_counts = (
         df_consented
         .dropna(subset=["participation_status_label"])
@@ -165,7 +187,9 @@ if required_cols.issubset(df_consented.columns):
         .reset_index(name="Count")
     )
 
+    # --------------------------------------------------
     # Plot
+    # --------------------------------------------------
     fig1 = px.bar(
         participation_counts,
         x="participation_status_label",
@@ -194,6 +218,7 @@ if required_cols.issubset(df_consented.columns):
 
 else:
     st.warning("Required participation / consent columns are missing.")
+
 
 
 # ======================================================
@@ -573,6 +598,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
