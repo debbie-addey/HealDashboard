@@ -115,69 +115,78 @@ else:
 
 
 # -------------------------------
-# Participation / Consent Status Breakdown (NO OVERLAPS)
+# Participation / Consent Status Breakdown
+# (Agreed / Declined / Not Started)
 # -------------------------------
 
 required_cols = {
     "study_id",
+    "redcap_event_name",
     "participation_status",
     "consent_complete",
     "consent_sig_first_name",
     "consent_sig_last_name",
-    "consent_sig_email"
+    "consent_sig_email",
+    "stop_contact"
 }
 
-if required_cols.issubset(df_consented.columns):
+if required_cols.issubset(df.columns):
 
     # --------------------------------------------------
-    # Normalize types
+    # 1. Scope to ENROLMENT event (CRITICAL)
+    # --------------------------------------------------
+    df_consented = df[df["redcap_event_name"] == "enrolment_arm_1"].copy()
+
+    # --------------------------------------------------
+    # 2. Normalize types
     # --------------------------------------------------
     df_consented["participation_status"] = df_consented["participation_status"].astype(str)
     df_consented["consent_complete"] = df_consented["consent_complete"].astype(str)
+    df_consented["stop_contact"] = df_consented["stop_contact"].astype(str)
 
-    for col in [
+    sig_fields = [
         "consent_sig_first_name",
         "consent_sig_last_name",
         "consent_sig_email"
-    ]:
-        df_consented[col] = df_consented[col].fillna("").astype(str).str.strip()
+    ]
+
+    for col in sig_fields:
+        df_consented[col] = (
+            df_consented[col]
+            .fillna("")
+            .astype(str)
+            .str.strip()
+        )
 
     # --------------------------------------------------
-    # Initialize label
+    # 3. Assign participation labels (exclusive)
     # --------------------------------------------------
     df_consented["participation_status_label"] = None
 
-    # --------------------------------------------------
     # 1️⃣ Agreed to Participate
-    # --------------------------------------------------
     df_consented.loc[
         (df_consented["participation_status"] == "1") &
         (df_consented["consent_complete"] == "2"),
         "participation_status_label"
     ] = "Agreed to Participate"
 
-    # --------------------------------------------------
     # 2️⃣ Declined to Participate
-    # --------------------------------------------------
     df_consented.loc[
         (df_consented["participation_status"] == "0") &
         (df_consented["consent_complete"] == "2"),
         "participation_status_label"
     ] = "Declined to Participate"
 
-    # --------------------------------------------------
     # 3️⃣ Not Started Yet
-    # (no consent signature fields filled)
-    # --------------------------------------------------
     df_consented.loc[
         (df_consented["consent_complete"] != "2") &
-        # (df_consented["consent_complete"] == "0") &
+        (df_consented[sig_fields].eq("").all(axis=1)) &
         (df_consented["stop_contact"] == "0"),
         "participation_status_label"
     ] = "Not Started Yet"
 
     # --------------------------------------------------
-    # Aggregate counts (unique participants)
+    # 4. Aggregate counts (unique participants)
     # --------------------------------------------------
     participation_counts = (
         df_consented
@@ -188,7 +197,7 @@ if required_cols.issubset(df_consented.columns):
     )
 
     # --------------------------------------------------
-    # Plot
+    # 5. Plot
     # --------------------------------------------------
     fig1 = px.bar(
         participation_counts,
@@ -598,6 +607,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
