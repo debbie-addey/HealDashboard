@@ -97,7 +97,7 @@ stopcontact_count = (df["stop_contact"]=="1").sum()
 total_invited = invited_count
 
 # Layout: 6 KPIs in one row
-col1, col6, col7, col8 = st.columns(4)
+col1, col6, col7, col8, col2 = st.columns(5)
 col1.metric("Invited", total_invited)
 col7.metric("HEAL QX Completed", heal_completed_total)
 col8.metric("Force Complete", heal_completed_forced)
@@ -607,6 +607,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
