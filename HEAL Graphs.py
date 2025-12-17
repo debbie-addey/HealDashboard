@@ -80,7 +80,7 @@ heal_completed_forced = (
 heal_completed_total = heal_completed_natural + heal_completed_forced
 heal_completed_total = int(heal_completed_total)
 
-
+stopcontact_count = (df["stop_contact"]=="1").sum()
 
 # Recall 2 invited = enrolment arm flag
 #recall2_invited = ((df["redcap_event_name"] == "enrolment_arm_1") & (df["asa_act_complete"] == "1")).sum()
@@ -101,7 +101,7 @@ col1, col6, col7, col8 = st.columns(4)
 col1.metric("Invited", total_invited)
 col7.metric("HEAL QX Completed", heal_completed_total)
 col8.metric("Force Complete", heal_completed_forced)
-#col2.metric("Recall1 Invited", heal_completed_total)
+col2.metric("Opt Outs", stopcontact_count)
 #col3.metric("Recall2 Invited", recall2_invited)
 #col4.metric("Recall3 Invited", recall3_invited)
 #col5.metric("Recall4 Invited", recall4_invited)
@@ -607,6 +607,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
