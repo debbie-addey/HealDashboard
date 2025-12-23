@@ -344,7 +344,7 @@ EVENT_FU2 = "followup2_arm_1"
 EVENT_FU3 = "followup3_arm_1"
 
 RECALL1_DELAY_DAYS = 14
-RECALL2_DELAY_DAYS = 10
+RECALL2_DELAY_DAYS = 9
 RECALL3_DELAY_MONTHS = 6
 RECALL4_DELAY_DAYS = 10
 
@@ -607,6 +607,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
