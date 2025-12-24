@@ -77,6 +77,7 @@ heal_completed_forced = (
     (df["hlq_status"] == "force_complete")
 ).sum()
 
+
 heal_completed_total = heal_completed_natural + heal_completed_forced
 heal_completed_total = int(heal_completed_total)
 
@@ -607,6 +608,7 @@ with main_col:
 with legend_col:
     st.markdown("### Legend")
     st.plotly_chart(legend_only(), use_container_width=True)
+
 
 
 
